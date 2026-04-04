@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Helper</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <div class="nav-brand">🎓 Student Helper</div>
+    <ul class="nav-links">
+      <li><a href="#" class="nav-btn active" data-tab="dashboard">Dashboard</a></li>
+      <li><a href="#" class="nav-btn" data-tab="gpa">GPA Calc</a></li>
+      <li><a href="#" class="nav-btn" data-tab="todo">To-Do</a></li>
+      <li><a href="#" class="nav-btn" data-tab="pomodoro">Pomodoro</a></li>
+      <li><a href="#" class="nav-btn" data-tab="notes">Notes</a></li>
+      <li><a href="#" class="nav-btn" data-tab="converter">Converter</a></li>
+    </ul>
+    <button class="theme-toggle" id="themeToggle" title="Toggle dark/light mode">🌙</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- ===== DASHBOARD ===== -->
+    <section id="tab-dashboard" class="tab active">
+      <h2>Welcome Back, Student! 👋</h2>
+      <p class="subtitle">Everything you need to ace your studies — all in one place.</p>
+      <div class="cards">
+        <div class="card" onclick="switchTab('gpa')">
+          <div class="card-icon">📊</div>
+          <h3>GPA Calculator</h3>
+          <p>Track your grades and calculate your GPA instantly.</p>
+        </div>
+        <div class="card" onclick="switchTab('todo')">
+          <div class="card-icon">✅</div>
+          <h3>To-Do List</h3>
+          <p>Manage your assignments and stay on top of deadlines.</p>
+        </div>
+        <div class="card" onclick="switchTab('pomodoro')">
+          <div class="card-icon">⏱️</div>
+          <h3>Pomodoro Timer</h3>
+          <p>Boost focus with structured study and break sessions.</p>
+        </div>
+        <div class="card" onclick="switchTab('notes')">
+          <div class="card-icon">📝</div>
+          <h3>Quick Notes</h3>
+          <p>Jot down ideas, summaries and formulas on the fly.</p>
+        </div>
+        <div class="card" onclick="switchTab('converter')">
+          <div class="card-icon">🔢</div>
+          <h3>Unit Converter</h3>
+          <p>Convert length, mass, temperature and more.</p>
+        </div>
+      </div>
+
+      <!-- Daily quote -->
+      <div class="quote-box" id="quoteBox">
+        <span id="quoteText">Loading quote…</span>
+        <button class="btn-small" id="newQuoteBtn">New Quote</button>
+      </div>
+    </section>
+
+    <!-- ===== GPA CALCULATOR ===== -->
+    <section id="tab-gpa" class="tab">
+      <h2>📊 GPA Calculator</h2>
+      <p class="subtitle">Enter your courses, grades, and credit hours.</p>
+
+      <div class="gpa-form">
+        <div class="gpa-header row">
+          <span>Course Name</span>
+          <span>Grade (A–F / %)</span>
+          <span>Credits</span>
+          <span></span>
+        </div>
+        <div id="courseList"></div>
+        <button class="btn" id="addCourseBtn">+ Add Course</button>
+      </div>
+
+      <div class="result-box" id="gpaResult" style="display:none;">
+        <div class="result-label">Cumulative GPA</div>
+        <div class="result-value" id="gpaValue">0.00</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="calcGpaBtn">Calculate GPA</button>
+        <button class="btn btn-danger" id="clearGpaBtn">Clear All</button>
+      </div>
+    </section>
+
+    <!-- ===== TO-DO LIST ===== -->
+    <section id="tab-todo" class="tab">
+      <h2>✅ To-Do List</h2>
+      <p class="subtitle">Stay organized — add, complete and remove tasks.</p>
+
+      <div class="todo-input-row">
+        <input type="text" id="taskInput" placeholder="Add a new task…" maxlength="120" />
+        <select id="taskPriority">
+          <option value="low">🟢 Low</option>
+          <option value="medium" selected>🟡 Medium</option>
+          <option value="high">🔴 High</option>
+        </select>
+        <input type="date" id="taskDue" />
+        <button class="btn btn-primary" id="addTaskBtn">Add</button>
+      </div>
+
+      <div class="filter-row">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="done">Done</button>
+        <button class="btn btn-danger btn-small" id="clearDoneBtn">Clear Done</button>
+      </div>
+
+      <ul id="taskList" class="task-list"></ul>
+      <div id="todoEmpty" class="empty-state">No tasks yet — add one above! 🎉</div>
+    </section>
+
+    <!-- ===== POMODORO ===== -->
+    <section id="tab-pomodoro" class="tab">
+      <h2>⏱️ Pomodoro Timer</h2>
+      <p class="subtitle">25 min focus → 5 min break. Stay in the zone.</p>
+
+      <div class="pomodoro-settings">
+        <label>Focus (min) <input type="number" id="focusMin" value="25" min="1" max="90" /></label>
+        <label>Break (min) <input type="number" id="breakMin" value="5" min="1" max="30" /></label>
+        <label>Rounds <input type="number" id="pomRounds" value="4" min="1" max="12" /></label>
+      </div>
+
+      <div class="pomodoro-display">
+        <div class="pom-phase" id="pomPhase">Focus</div>
+        <div class="pom-clock" id="pomClock">25:00</div>
+        <div class="pom-progress">
+          <div class="pom-progress-bar" id="pomProgressBar"></div>
+        </div>
+        <div class="pom-rounds" id="pomRoundsDisplay">Round 1 / 4</div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="pomStart">▶ Start</button>
+        <button class="btn" id="pomPause" disabled>⏸ Pause</button>
+        <button class="btn btn-danger" id="pomReset">↺ Reset</button>
+      </div>
+
+      <div id="pomLog" class="pom-log"></div>
+    </section>
+
+    <!-- ===== NOTES ===== -->
+    <section id="tab-notes" class="tab">
+      <h2>📝 Quick Notes</h2>
+      <p class="subtitle">Auto-saved to your browser — never lose an idea.</p>
+
+      <div class="notes-toolbar">
+        <button class="btn-small" id="addNoteBtn">+ New Note</button>
+        <input type="text" id="noteSearch" placeholder="Search notes…" />
+      </div>
+
+      <div id="notesGrid" class="notes-grid"></div>
+      <div id="notesEmpty" class="empty-state">No notes yet — create one above! 📌</div>
+    </section>
+
+    <!-- ===== UNIT CONVERTER ===== -->
+    <section id="tab-converter" class="tab">
+      <h2>🔢 Unit Converter</h2>
+      <p class="subtitle">Quickly convert common units used in science and maths.</p>
+
+      <div class="converter-tabs">
+        <button class="ctab active" data-ctab="length">📏 Length</button>
+        <button class="ctab" data-ctab="mass">⚖️ Mass</button>
+        <button class="ctab" data-ctab="temp">🌡️ Temperature</button>
+        <button class="ctab" data-ctab="time">⌚ Time</button>
+        <button class="ctab" data-ctab="speed">🚀 Speed</button>
+      </div>
+
+      <div class="converter-body" id="converterBody">
+        <!-- rendered by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <p>Made with ❤️ for students everywhere &mdash; <a href="https://github.com/ravindrajaipal/Student-helpfull" target="_blank">GitHub</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
