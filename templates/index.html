@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Helpfull – AI Exam Preparation Platform</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<!-- ========== NAVBAR ========== -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <i class="bi bi-mortarboard-fill me-2"></i>Student Helpfull
+    </a>
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="badge lang-badge" id="langDisplay">🇬🇧 English</span>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="langToggle" role="switch" />
+        <label class="form-check-label text-white" for="langToggle">हिंदी</label>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ========== HERO ========== -->
+<section class="hero-section">
+  <div class="container text-center">
+    <div class="hero-icon-wrap">
+      <i class="bi bi-robot"></i>
+    </div>
+    <h1 class="hero-title" id="heroTitle">AI-Powered Exam Preparation</h1>
+    <p class="hero-subtitle" id="heroSubtitle">
+      Upload your study material <strong>or</strong> enter a subject &amp; topic — get instant
+      notes, flashcards, quizzes, mind maps &amp; infographics in English or Hindi.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="#uploadSection" class="btn btn-light btn-lg px-4">
+        <i class="bi bi-cloud-upload me-2"></i><span id="navUploadLabel">Upload Material</span>
+      </a>
+      <a href="#topicSection" class="btn btn-outline-light btn-lg px-4">
+        <i class="bi bi-book me-2"></i><span id="navTopicLabel">Enter Topic</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURE PILLS ========== -->
+<section class="features-bar py-3">
+  <div class="container">
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+      <span class="feature-pill"><i class="bi bi-file-earmark-text me-1"></i><span class="feat-label" data-en="Full Notes" data-hi="पूर्ण नोट्स">Full Notes</span></span>
+      <span class="feature-pill"><i class="bi bi-lightning-charge me-1"></i><span class="feat-label" data-en="Revision Notes" data-hi="पुनरावृत्ति नोट्स">Revision Notes</span></span>
+      <span class="feature-pill"><i class="bi bi-card-list me-1"></i><span class="feat-label" data-en="Flash Cards" data-hi="फ्लैश कार्ड">Flash Cards</span></span>
+      <span class="feature-pill"><i class="bi bi-bar-chart-line me-1"></i><span class="feat-label" data-en="Infographic" data-hi="इन्फोग्राफिक">Infographic</span></span>
+      <span class="feature-pill"><i class="bi bi-patch-question me-1"></i><span class="feat-label" data-en="Quizzes" data-hi="क्विज़">Quizzes</span></span>
+      <span class="feature-pill"><i class="bi bi-diagram-3 me-1"></i><span class="feat-label" data-en="Mind Map" data-hi="माइंड मैप">Mind Map</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SECTION 1: UPLOAD MATERIAL ========== -->
+<section class="content-section" id="uploadSection">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <div class="section-icon-wrap"><i class="bi bi-cloud-upload-fill"></i></div>
+      <h2 class="section-title" id="uploadSectionTitle">Upload Your Study Material</h2>
+      <p class="section-desc" id="uploadSectionDesc">
+        Upload a PDF, Word document, or text file — our AI will extract the content and
+        generate infographics, quizzes, and mind maps for you.
+      </p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="card upload-card">
+          <div class="card-body p-4">
+            <div class="upload-dropzone" id="dropzone">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+              <p class="mt-3 mb-1 fw-semibold" id="dropzoneText">Drag &amp; drop your file here</p>
+              <p class="text-muted small" id="dropzoneSubText">or click to browse</p>
+              <p class="text-muted small">Supports PDF, DOCX, TXT (max 16 MB)</p>
+              <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" class="d-none" />
+            </div>
+
+            <div id="fileInfo" class="file-info-bar d-none mt-3">
+              <i class="bi bi-file-earmark-check-fill text-success me-2"></i>
+              <span id="fileName"></span>
+              <button type="button" class="btn btn-sm btn-outline-danger ms-auto" id="clearFile">
+                <i class="bi bi-x"></i>
+              </button>
+            </div>
+
+            <div class="mt-4 d-flex align-items-center gap-3 flex-wrap">
+              <div class="flex-grow-1">
+                <label class="form-label fw-semibold" id="uploadLangLabel">Language</label>
+                <select class="form-select" id="uploadLanguage">
+                  <option value="english">🇬🇧 English</option>
+                  <option value="hindi">🇮🇳 हिंदी (Hindi)</option>
+                </select>
+              </div>
+              <div class="align-self-end">
+                <button class="btn btn-primary btn-lg px-5" id="uploadBtn" disabled>
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="uploadSpinner"></span>
+                  <i class="bi bi-magic me-2" id="uploadIcon"></i>
+                  <span id="uploadBtnText">Generate</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Results -->
+    <div id="uploadResults" class="mt-5 d-none">
+      <h3 class="text-center mb-4" id="uploadResultsTitle">📚 Generated Study Aids</h3>
+      <ul class="nav nav-pills justify-content-center mb-4 result-tabs" id="uploadTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#uploadInfographic"><i class="bi bi-bar-chart-line me-1"></i><span class="feat-label" data-en="Infographic" data-hi="इन्फोग्राफिक">Infographic</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#uploadQuiz"><i class="bi bi-patch-question me-1"></i><span class="feat-label" data-en="Quiz" data-hi="क्विज़">Quiz</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#uploadMindmap"><i class="bi bi-diagram-3 me-1"></i><span class="feat-label" data-en="Mind Map" data-hi="माइंड मैप">Mind Map</span></a></li>
+      </ul>
+      <div class="tab-content" id="uploadTabContent">
+        <div class="tab-pane fade show active" id="uploadInfographic"></div>
+        <div class="tab-pane fade" id="uploadQuiz"></div>
+        <div class="tab-pane fade" id="uploadMindmap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== DIVIDER ========== -->
+<div class="section-divider">
+  <svg viewBox="0 0 1440 60" preserveAspectRatio="none"><path d="M0,30 Q360,60 720,30 Q1080,0 1440,30 L1440,60 L0,60 Z" fill="#f0f4ff"/></svg>
+</div>
+
+<!-- ========== SECTION 2: TOPIC-BASED GENERATION ========== -->
+<section class="content-section topic-section" id="topicSection">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <div class="section-icon-wrap topic-icon"><i class="bi bi-book-fill"></i></div>
+      <h2 class="section-title" id="topicSectionTitle">Enter Subject &amp; Topic</h2>
+      <p class="section-desc" id="topicSectionDesc">
+        Enter any subject and topic to instantly get full notes, revision notes, flash cards,
+        infographics, quizzes, and a mind map.
+      </p>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card topic-card">
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="form-label fw-semibold" id="subjectLabel">Subject</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-journal-bookmark"></i></span>
+                  <input type="text" class="form-control" id="subjectInput"
+                    placeholder="e.g. Physics, History…" />
+                </div>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold" id="topicLabel">Topic</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-tag"></i></span>
+                  <input type="text" class="form-control" id="topicInput"
+                    placeholder="e.g. Newton's Laws…" />
+                </div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label fw-semibold" id="topicLangLabel">Language</label>
+                <select class="form-select" id="topicLanguage">
+                  <option value="english">🇬🇧 EN</option>
+                  <option value="hindi">🇮🇳 HI</option>
+                </select>
+              </div>
+            </div>
+            <div class="mt-4 text-center">
+              <button class="btn btn-success btn-lg px-5" id="generateBtn">
+                <span class="spinner-border spinner-border-sm me-2 d-none" id="generateSpinner"></span>
+                <i class="bi bi-stars me-2" id="generateIcon"></i>
+                <span id="generateBtnText">Generate Study Materials</span>
+              </button>
+            </div>
+
+            <!-- Quick examples -->
+            <div class="mt-3 text-center">
+              <small class="text-muted" id="examplesLabel">Try an example: </small>
+              <button class="btn btn-sm btn-outline-secondary ms-1 example-btn" data-subject="Physics" data-topic="Newton's Laws of Motion">Physics</button>
+              <button class="btn btn-sm btn-outline-secondary ms-1 example-btn" data-subject="Chemistry" data-topic="Periodic Table">Chemistry</button>
+              <button class="btn btn-sm btn-outline-secondary ms-1 example-btn" data-subject="Mathematics" data-topic="Quadratic Equations">Maths</button>
+              <button class="btn btn-sm btn-outline-secondary ms-1 example-btn" data-subject="Biology" data-topic="Cell Structure">Biology</button>
+              <button class="btn btn-sm btn-outline-secondary ms-1 example-btn" data-subject="History" data-topic="Indian Independence Movement">History</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topic Results -->
+    <div id="topicResults" class="mt-5 d-none">
+      <h3 class="text-center mb-1" id="topicResultsTitle">📖 Study Materials</h3>
+      <p class="text-center text-muted mb-4" id="topicResultsSubtitle"></p>
+      <ul class="nav nav-pills justify-content-center mb-4 result-tabs" id="topicTabs">
+        <li class="nav-item"><a class="nav-link active" data-bs-toggle="pill" href="#topicNotes"><i class="bi bi-file-earmark-text me-1"></i><span class="feat-label" data-en="Full Notes" data-hi="पूर्ण नोट्स">Full Notes</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#topicRevision"><i class="bi bi-lightning-charge me-1"></i><span class="feat-label" data-en="Revision" data-hi="पुनरावृत्ति">Revision</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#topicFlashcards"><i class="bi bi-card-list me-1"></i><span class="feat-label" data-en="Flash Cards" data-hi="फ्लैश कार्ड">Flash Cards</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#topicInfographic"><i class="bi bi-bar-chart-line me-1"></i><span class="feat-label" data-en="Infographic" data-hi="इन्फोग्राफिक">Infographic</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#topicQuiz"><i class="bi bi-patch-question me-1"></i><span class="feat-label" data-en="Quiz" data-hi="क्विज़">Quiz</span></a></li>
+        <li class="nav-item"><a class="nav-link" data-bs-toggle="pill" href="#topicMindmap"><i class="bi bi-diagram-3 me-1"></i><span class="feat-label" data-en="Mind Map" data-hi="माइंड मैप">Mind Map</span></a></li>
+      </ul>
+      <div class="tab-content" id="topicTabContent">
+        <div class="tab-pane fade show active" id="topicNotes"></div>
+        <div class="tab-pane fade" id="topicRevision"></div>
+        <div class="tab-pane fade" id="topicFlashcards"></div>
+        <div class="tab-pane fade" id="topicInfographic"></div>
+        <div class="tab-pane fade" id="topicQuiz"></div>
+        <div class="tab-pane fade" id="topicMindmap"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container text-center">
+    <p class="mb-1"><i class="bi bi-mortarboard-fill me-2"></i><strong>Student Helpfull</strong></p>
+    <p class="small text-muted mb-0" id="footerText">AI-powered exam preparation in English &amp; Hindi</p>
+  </div>
+</footer>
+
+<!-- Toast notification -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="appToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body" id="toastBody"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
