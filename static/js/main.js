@@ -45,6 +45,12 @@ const I18N = {
     errorNoTopic: "Please enter a topic.",
     errorNoFile: "Please select a file first.",
     errorGeneric: "Something went wrong. Please try again.",
+    historyLabel: "History",
+    historyEmpty: "No recent topics",
+    historyClear: "Clear History",
+    copySuccess: "📋 Copied to clipboard!",
+    copyFail: "Copy failed – please try manually.",
+    downloadSuccess: "📥 Notes downloaded!",
   },
   hindi: {
     heroTitle: "AI-संचालित परीक्षा तैयारी",
@@ -85,6 +91,12 @@ const I18N = {
     errorNoTopic: "कृपया टॉपिक दर्ज करें।",
     errorNoFile: "कृपया पहले एक फ़ाइल चुनें।",
     errorGeneric: "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    historyLabel: "इतिहास",
+    historyEmpty: "कोई हालिया विषय नहीं",
+    historyClear: "इतिहास साफ़ करें",
+    copySuccess: "📋 क्लिपबोर्ड पर कॉपी हुआ!",
+    copyFail: "कॉपी विफल – कृपया मैन्युअल रूप से प्रयास करें।",
+    downloadSuccess: "📥 नोट्स डाउनलोड हुए!",
   },
 };
 
@@ -92,6 +104,11 @@ const I18N = {
 let currentLang = "english";
 let selectedFile = null;
 const quizState = {};
+const quizListeners = {};   // Bug fix: track per-container quiz click handlers
+
+/* ---- Recent history (localStorage) ---- */
+const HISTORY_KEY = "sh_history";
+const MAX_HISTORY = 5;
 
 /* ============================================================
    INIT
@@ -102,6 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
   initGenerateBtn();
   initUploadBtn();
   initExampleBtns();
+  initDarkMode();
+  initCharCounters();
+  initResultActions();
+  initHistoryDelegation();
+  renderHistoryDropdown();
   checkDemoMode();
 });
 
@@ -141,6 +163,8 @@ function applyLanguage(lang) {
   setText("topicResultsTitle", t.topicResultsTitle);
   setText("footerText", t.footerText);
   setText("langDisplay", t.langDisplay);
+  setText("historyLabel", t.historyLabel);
+  setText("historyEmpty", t.historyEmpty);
 
   // Feature pill labels
   document.querySelectorAll(".feat-label").forEach((el) => {
@@ -300,6 +324,7 @@ async function handleGenerate() {
     if (!res.ok || json.error) throw new Error(json.error || t.errorGeneric);
 
     displayTopicResults(json.data, subject, topic, language);
+    addToHistory(subject, topic);
     showToast("✅ " + (language === "hindi" ? "सामग्री तैयार है!" : "Study materials generated!"), "bg-success");
   } catch (err) {
     showToast("❌ " + (err.message || t.errorGeneric), "bg-danger");
@@ -445,9 +470,13 @@ function renderQuiz(containerId, questions, lang) {
 
   renderQuizQuestion(containerId, t);
 
-  // Bind to container (delegated)
+  // Bug fix: remove any previously registered handler before adding a new one
+  // to prevent duplicate event handling when results are regenerated
   const el = document.getElementById(containerId);
-  el.addEventListener("click", (e) => {
+  if (quizListeners[containerId]) {
+    el.removeEventListener("click", quizListeners[containerId]);
+  }
+  const handler = (e) => {
     const optEl = e.target.closest(".quiz-option");
     const submitBtn = e.target.closest("#quiz-submit-" + containerId);
     const nextBtn = e.target.closest("#quiz-next-" + containerId);
@@ -457,7 +486,9 @@ function renderQuiz(containerId, questions, lang) {
     if (submitBtn) submitAnswer(containerId);
     if (nextBtn) nextQuestion(containerId);
     if (retryBtn) retryQuiz(containerId);
-  });
+  };
+  quizListeners[containerId] = handler;
+  el.addEventListener("click", handler);
 }
 
 function renderQuizQuestion(containerId, t_override) {
@@ -511,13 +542,19 @@ function submitAnswer(containerId) {
   if (!state || state.answered) return;
   const t = I18N[state.lang] || I18N.english;
   const q = state.questions[state.currentIndex];
-  const correctOpt = q.options.find((o) => o.startsWith(q.answer + ".") || o === q.answer);
+
+  // Robust answer matching: compare by leading letter (handles "A.", "A)", "A " variants)
+  const answerLetter = (q.answer || "").trim().charAt(0).toUpperCase();
+  function optMatchesAnswer(optText) {
+    const first = (optText || "").trim().charAt(0).toUpperCase();
+    return first === answerLetter;
+  }
 
   state.answered = true;
 
   document.querySelectorAll(`#${containerId} .quiz-option`).forEach((el) => {
     const isSelected = el.dataset.opt === state.selected;
-    const isCorrect = correctOpt && (el.dataset.opt === correctOpt || el.dataset.opt.startsWith(q.answer + "."));
+    const isCorrect = optMatchesAnswer(el.dataset.opt);
 
     if (isCorrect) el.classList.add("reveal-correct");
     if (isSelected && isCorrect) { el.classList.remove("reveal-correct"); el.classList.add("correct"); state.score++; }
@@ -583,15 +620,9 @@ function retryQuiz(containerId) {
    ============================================================ */
 async function checkDemoMode() {
   try {
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subject: "_ping_", topic: "_ping_", language: "english" }),
-    });
+    const res = await fetch("/api/health");
     const json = await res.json();
-    if (json.success && json.data && json.data._demo) {
-      addDemoBanner();
-    }
+    if (json.demo) addDemoBanner();
   } catch (_) {}
 }
 
@@ -631,3 +662,172 @@ document.addEventListener("click", (e) => {
   const card = e.target.closest("#uploadResults .flashcard");
   if (card) card.classList.toggle("flipped");
 });
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+function initDarkMode() {
+  const btn = document.getElementById("darkModeToggle");
+  if (!btn) return;
+  if (localStorage.getItem("darkMode") === "1") _applyDarkMode(true);
+  btn.addEventListener("click", () => {
+    const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
+    _applyDarkMode(!isDark);
+  });
+}
+
+function _applyDarkMode(enable) {
+  const btn = document.getElementById("darkModeToggle");
+  if (enable) {
+    document.documentElement.setAttribute("data-bs-theme", "dark");
+    if (btn) btn.innerHTML = '<i class="bi bi-sun-fill"></i>';
+    localStorage.setItem("darkMode", "1");
+  } else {
+    document.documentElement.removeAttribute("data-bs-theme");
+    if (btn) btn.innerHTML = '<i class="bi bi-moon-fill"></i>';
+    localStorage.setItem("darkMode", "0");
+  }
+}
+
+/* ============================================================
+   CHARACTER COUNTERS
+   ============================================================ */
+function initCharCounters() {
+  const pairs = [
+    ["subjectInput", "subjectCounter", 100],
+    ["topicInput", "topicCounter", 100],
+  ];
+  pairs.forEach(([inputId, counterId, max]) => {
+    const input = document.getElementById(inputId);
+    const counter = document.getElementById(counterId);
+    if (!input || !counter) return;
+    input.addEventListener("input", () => {
+      const len = input.value.length;
+      counter.textContent = `${len}/${max}`;
+      counter.classList.toggle("char-counter--warn", len > max * 0.85);
+    });
+  });
+}
+
+/* ============================================================
+   RESULT ACTION BUTTONS (print, copy, download)
+   ============================================================ */
+function initResultActions() {
+  const btn = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
+
+  btn("printTopicBtn",    () => window.print());
+  btn("printUploadBtn",   () => window.print());
+
+  btn("copyTopicBtn", async () => {
+    const el = document.getElementById("topicNotes");
+    const text = el ? el.innerText : "";
+    await copyToClipboard(text);
+  });
+
+  btn("downloadTopicBtn", () => {
+    const subject = (document.getElementById("subjectInput")?.value || "notes").trim();
+    const topic   = (document.getElementById("topicInput")?.value  || "topic").trim();
+    const el = document.getElementById("topicNotes");
+    const text = el ? el.innerText : "";
+    downloadText(text, `${subject}-${topic}-notes.txt`);
+  });
+
+  btn("downloadUploadBtn", () => {
+    const el = document.getElementById("uploadInfographic");
+    const text = el ? el.innerText : "";
+    downloadText(text, "study-material-notes.txt");
+  });
+}
+
+async function copyToClipboard(text) {
+  const t = I18N[currentLang] || I18N.english;
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(t.copySuccess, "bg-success");
+  } catch (_) {
+    showToast(t.copyFail, "bg-warning");
+  }
+}
+
+function downloadText(text, filename) {
+  const t = I18N[currentLang] || I18N.english;
+  // Sanitize: allow only safe characters and prevent directory traversal
+  const safe = filename
+    .replace(/[^a-z0-9.\-_]/gi, "_")
+    .replace(/\.{2,}/g, "_");
+  const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = safe;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(t.downloadSuccess, "bg-success");
+}
+
+/* ============================================================
+   RECENT HISTORY (localStorage)
+   ============================================================ */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch (_) { return []; }
+}
+
+function addToHistory(subject, topic) {
+  const history = getHistory().filter((h) => !(h.subject === subject && h.topic === topic));
+  history.unshift({ subject, topic, ts: Date.now() });
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  renderHistoryDropdown();
+}
+
+function renderHistoryDropdown() {
+  const list = document.getElementById("historyList");
+  if (!list) return;
+  const t = I18N[currentLang] || I18N.english;
+  const history = getHistory();
+  if (!history.length) {
+    list.innerHTML = `<li><span class="dropdown-item-text text-muted small py-2 px-3" id="historyEmpty">${t.historyEmpty}</span></li>`;
+    return;
+  }
+  const items = history.map((h, i) =>
+    `<li><a class="dropdown-item history-item" href="#" data-idx="${i}">
+      <strong>${esc(h.subject)}</strong> &ndash; ${esc(h.topic)}
+    </a></li>`
+  ).join("");
+  list.innerHTML = items +
+    `<li><hr class="dropdown-divider"></li>
+     <li><a class="dropdown-item text-danger small" href="#" id="clearHistoryBtn">
+       <i class="bi bi-trash me-1"></i>${t.historyClear}
+     </a></li>`;
+}
+
+function initHistoryDelegation() {
+  document.addEventListener("click", (e) => {
+    // Click on a history item → fill subject/topic and scroll to section
+    const histItem = e.target.closest(".history-item");
+    if (histItem) {
+      e.preventDefault();
+      const idx = parseInt(histItem.dataset.idx, 10);
+      const history = getHistory();
+      if (history[idx]) {
+        document.getElementById("subjectInput").value = history[idx].subject;
+        document.getElementById("topicInput").value   = history[idx].topic;
+        document.getElementById("topicSection").scrollIntoView({ behavior: "smooth" });
+      }
+      // Close the Bootstrap dropdown
+      const dd = document.getElementById("historyDropdown");
+      if (dd) bootstrap.Dropdown.getOrCreateInstance(dd).hide();
+      return;
+    }
+
+    // Click "Clear History"
+    if (e.target.closest("#clearHistoryBtn")) {
+      e.preventDefault();
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistoryDropdown();
+      const dd = document.getElementById("historyDropdown");
+      if (dd) bootstrap.Dropdown.getOrCreateInstance(dd).hide();
+    }
+  });
+}

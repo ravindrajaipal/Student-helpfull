@@ -11,8 +11,8 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
-from utils.file_processor import extract_text_from_file
-from utils.content_generator import generate_from_material, generate_from_topic
+from utils.file_processor import extract_text_from_file, ExtractionError
+from utils.content_generator import generate_from_material, generate_from_topic, is_demo_mode
 
 load_dotenv()
 
@@ -46,6 +46,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/api/health")
+def health():
+    """Health check endpoint – also reports whether the app is in demo mode."""
+    return jsonify({"status": "ok", "demo": is_demo_mode()})
+
+
 @app.route("/api/upload", methods=["POST"])
 def upload_material():
     """
@@ -69,13 +75,19 @@ def upload_material():
         language = "english"
 
     filename = secure_filename(file.filename)
+    if not filename:
+        return jsonify({"error": "Invalid filename"}), 400
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
     try:
         extracted_text = extract_text_from_file(filepath)
+        if len(extracted_text.strip()) < 30:
+            return jsonify({"error": "The file contains very little text. Please upload a text-rich document."}), 400
         result = generate_from_material(extracted_text, language)
         return jsonify({"success": True, "filename": filename, "data": result})
+    except ExtractionError as exc:
+        return jsonify({"error": str(exc)}), 400
     except Exception:
         app.logger.exception("Error processing uploaded file")
         return jsonify({"error": "Processing failed. Please check your file and try again."}), 500
@@ -106,6 +118,10 @@ def generate_topic():
         return jsonify({"error": "Subject is required"}), 400
     if not topic:
         return jsonify({"error": "Topic is required"}), 400
+    if len(subject) > 200:
+        return jsonify({"error": "Subject is too long (max 200 characters)"}), 400
+    if len(topic) > 200:
+        return jsonify({"error": "Topic is too long (max 200 characters)"}), 400
     if language not in ("english", "hindi"):
         language = "english"
 

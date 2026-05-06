@@ -2,9 +2,12 @@
 Content generator using Google Gemini AI.
 Falls back to demo content when GEMINI_API_KEY is not configured.
 """
+import logging
 import os
 import json
 import re
+
+logger = logging.getLogger(__name__)
 
 _GEMINI_AVAILABLE = False
 _genai = None
@@ -24,6 +27,11 @@ except Exception:
 # ------------------------------------------------------------------
 # Public API
 # ------------------------------------------------------------------
+
+def is_demo_mode() -> bool:
+    """Return True when Gemini AI is not configured and demo content is used."""
+    return not _GEMINI_AVAILABLE
+
 
 def generate_from_topic(subject: str, topic: str, language: str = "english") -> dict:
     """Generate full study materials for a given subject and topic."""
@@ -216,10 +224,20 @@ def _call_gemini(prompt: str) -> dict:
     model = _genai.GenerativeModel("gemini-1.5-flash")  # type: ignore
     response = model.generate_content(prompt)
     raw = response.text.strip()
-    # Strip markdown code fences if present
-    raw = re.sub(r"^```(?:json)?\s*", "", raw)
-    raw = re.sub(r"\s*```$", "", raw)
-    return json.loads(raw)
+    # Strip markdown code fences from the full response string
+    raw = re.sub(r"\A```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```\Z", "", raw)
+    raw = raw.strip()
+    # If JSON is embedded inside surrounding text, extract the first {...} block
+    if not raw.startswith("{"):
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if match:
+            raw = match.group(0)
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        logger.error("JSON decode error: %s | Raw (first 500 chars): %.500s", exc, raw)
+        raise
 
 
 def _gemini_generate_topic(subject: str, topic: str, language: str) -> dict:
@@ -228,6 +246,7 @@ def _gemini_generate_topic(subject: str, topic: str, language: str) -> dict:
     try:
         return _call_gemini(prompt)
     except Exception:
+        logger.exception("Gemini topic generation failed for subject=%r topic=%r", subject, topic)
         return _demo_topic_content(subject, topic, language)
 
 
@@ -239,6 +258,7 @@ def _gemini_generate_material(text: str, language: str) -> dict:
     try:
         return _call_gemini(prompt)
     except Exception:
+        logger.exception("Gemini material generation failed")
         return _demo_material_content(language)
 
 
