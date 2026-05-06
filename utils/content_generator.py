@@ -224,9 +224,9 @@ def _call_gemini(prompt: str) -> dict:
     model = _genai.GenerativeModel("gemini-1.5-flash")  # type: ignore
     response = model.generate_content(prompt)
     raw = response.text.strip()
-    # Strip markdown code fences (handle multiline)
-    raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE)
-    raw = re.sub(r"\s*```\s*$", "", raw, flags=re.MULTILINE)
+    # Strip markdown code fences from the full response string
+    raw = re.sub(r"\A```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```\Z", "", raw)
     raw = raw.strip()
     # If JSON is embedded inside surrounding text, extract the first {...} block
     if not raw.startswith("{"):

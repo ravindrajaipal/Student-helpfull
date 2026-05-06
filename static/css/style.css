@@ -520,6 +520,8 @@ body {
 
 /* ---- Character counter ---- */
 .char-counter { font-size: 0.78rem; transition: color 0.2s; }
+.char-counter--warn { color: #ef4444; }
+[data-bs-theme="dark"] .char-counter--warn { color: #f87171; }
 
 /* ---- Result action bar ---- */
 .result-action-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; }

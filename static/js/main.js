@@ -704,7 +704,7 @@ function initCharCounters() {
     input.addEventListener("input", () => {
       const len = input.value.length;
       counter.textContent = `${len}/${max}`;
-      counter.style.color = len > max * 0.85 ? "#ef4444" : "";
+      counter.classList.toggle("char-counter--warn", len > max * 0.85);
     });
   });
 }
@@ -751,7 +751,10 @@ async function copyToClipboard(text) {
 
 function downloadText(text, filename) {
   const t = I18N[currentLang] || I18N.english;
-  const safe = filename.replace(/[^a-z0-9.\-_]/gi, "_");
+  // Sanitize: allow only safe characters and prevent directory traversal
+  const safe = filename
+    .replace(/[^a-z0-9.\-_]/gi, "_")
+    .replace(/\.{2,}/g, "_");
   const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement("a");

@@ -11,7 +11,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
 
-from utils.file_processor import extract_text_from_file
+from utils.file_processor import extract_text_from_file, ExtractionError
 from utils.content_generator import generate_from_material, generate_from_topic, is_demo_mode
 
 load_dotenv()
@@ -82,12 +82,12 @@ def upload_material():
 
     try:
         extracted_text = extract_text_from_file(filepath)
-        if not extracted_text or (extracted_text.startswith("[") and "error" in extracted_text.lower()):
-            return jsonify({"error": "Could not extract text from the file. Ensure it is not encrypted or corrupted."}), 400
         if len(extracted_text.strip()) < 30:
             return jsonify({"error": "The file contains very little text. Please upload a text-rich document."}), 400
         result = generate_from_material(extracted_text, language)
         return jsonify({"success": True, "filename": filename, "data": result})
+    except ExtractionError as exc:
+        return jsonify({"error": str(exc)}), 400
     except Exception:
         app.logger.exception("Error processing uploaded file")
         return jsonify({"error": "Processing failed. Please check your file and try again."}), 500
