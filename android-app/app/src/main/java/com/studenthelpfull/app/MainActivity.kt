@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
         webView.settings.loadsImagesAutomatically = true
         webView.settings.allowFileAccess = false
         webView.settings.allowContentAccess = false
+        webView.settings.allowFileAccessFromFileURLs = false
+        webView.settings.allowUniversalAccessFromFileURLs = false
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)

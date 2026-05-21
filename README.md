@@ -162,7 +162,7 @@ The app integrates with **Google Gemini 1.5 Flash** for AI-generated content.
 
 An Android WebView project is included at:
 
-`/home/runner/work/Student-helpfull/Student-helpfull/android-app`
+`./android-app`
 
 ### Build Debug APK
 
