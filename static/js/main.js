@@ -730,7 +730,8 @@ function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
-  while (size >= 1024 && unitIndex < units.length - 1) {
+  const maxUnitIndex = units.length - 1;
+  while (size >= 1024 && unitIndex < maxUnitIndex) {
     size /= 1024;
     unitIndex += 1;
   }
