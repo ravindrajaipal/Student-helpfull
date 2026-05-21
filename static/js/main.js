@@ -51,6 +51,7 @@ const I18N = {
     copySuccess: "📋 Copied to clipboard!",
     copyFail: "Copy failed – please try manually.",
     downloadSuccess: "📥 Notes downloaded!",
+    backToTopLabel: "Back to top",
   },
   hindi: {
     heroTitle: "AI-संचालित परीक्षा तैयारी",
@@ -97,6 +98,7 @@ const I18N = {
     copySuccess: "📋 क्लिपबोर्ड पर कॉपी हुआ!",
     copyFail: "कॉपी विफल – कृपया मैन्युअल रूप से प्रयास करें।",
     downloadSuccess: "📥 नोट्स डाउनलोड हुए!",
+    backToTopLabel: "ऊपर जाएँ",
   },
 };
 
@@ -125,6 +127,8 @@ document.addEventListener("DOMContentLoaded", () => {
   initHistoryDelegation();
   renderHistoryDropdown();
   checkDemoMode();
+  initBackToTop();
+  updateGenerateState();
 });
 
 /* ============================================================
@@ -165,6 +169,8 @@ function applyLanguage(lang) {
   setText("langDisplay", t.langDisplay);
   setText("historyLabel", t.historyLabel);
   setText("historyEmpty", t.historyEmpty);
+  setText("subjectError", t.errorNoSubject);
+  setText("topicError", t.errorNoTopic);
 
   // Feature pill labels
   document.querySelectorAll(".feat-label").forEach((el) => {
@@ -179,6 +185,13 @@ function applyLanguage(lang) {
   // Demo banner
   const banner = document.getElementById("demoBanner");
   if (banner) banner.textContent = t.demoBannerText;
+
+  // Back to top accessibility
+  const backToTop = document.getElementById("backToTop");
+  if (backToTop) {
+    backToTop.setAttribute("aria-label", t.backToTopLabel);
+    backToTop.title = t.backToTopLabel;
+  }
 }
 
 /* ============================================================
@@ -208,6 +221,7 @@ function initDropzone() {
 function setFile(file) {
   selectedFile = file;
   document.getElementById("fileName").textContent = file.name;
+  document.getElementById("fileMeta").textContent = `(${formatBytes(file.size)})`;
   document.getElementById("fileInfo").classList.remove("d-none");
   document.getElementById("uploadBtn").disabled = false;
 }
@@ -216,6 +230,7 @@ function clearFile() {
   selectedFile = null;
   document.getElementById("fileInput").value = "";
   document.getElementById("fileInfo").classList.add("d-none");
+  document.getElementById("fileMeta").textContent = "";
   document.getElementById("uploadBtn").disabled = true;
 }
 
@@ -287,10 +302,18 @@ function initGenerateBtn() {
   document.getElementById("generateBtn").addEventListener("click", handleGenerate);
   // Allow Enter key in inputs
   ["subjectInput", "topicInput"].forEach((id) => {
-    document.getElementById(id).addEventListener("keydown", (e) => {
+    const input = document.getElementById(id);
+    input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleGenerate();
     });
+    input.addEventListener("input", () => {
+      input.classList.remove("is-invalid");
+      input.removeAttribute("aria-invalid");
+      input.removeAttribute("aria-describedby");
+      updateGenerateState();
+    });
   });
+  updateGenerateState();
 }
 
 function initExampleBtns() {
@@ -298,6 +321,7 @@ function initExampleBtns() {
     btn.addEventListener("click", () => {
       document.getElementById("subjectInput").value = btn.dataset.subject;
       document.getElementById("topicInput").value = btn.dataset.topic;
+      updateGenerateState();
     });
   });
 }
@@ -308,8 +332,20 @@ async function handleGenerate() {
   const topic = document.getElementById("topicInput").value.trim();
   const language = document.getElementById("topicLanguage").value;
 
-  if (!subject) { showToast(t.errorNoSubject, "bg-danger"); return; }
-  if (!topic) { showToast(t.errorNoTopic, "bg-danger"); return; }
+  if (!subject || !topic) {
+    let errorMsg = "";
+    if (!subject) {
+      markInvalid("subjectInput");
+      errorMsg = t.errorNoSubject;
+    }
+    if (!topic) {
+      markInvalid("topicInput");
+      if (!errorMsg) errorMsg = t.errorNoTopic;
+    }
+    if (errorMsg) showToast(errorMsg, "bg-danger");
+    updateGenerateState();
+    return;
+  }
 
   setGenerateLoading(true);
 
@@ -341,9 +377,25 @@ function setGenerateLoading(loading) {
   const t = I18N[currentLang];
 
   btn.disabled = loading;
+  if (loading) {
+    btn.setAttribute("data-loading", "true");
+  } else {
+    btn.removeAttribute("data-loading");
+  }
   spinner.classList.toggle("d-none", !loading);
   icon.classList.toggle("d-none", loading);
   text.textContent = loading ? t.generatingText : t.generateBtnText;
+}
+
+function updateGenerateState() {
+  const subject = document.getElementById("subjectInput").value.trim();
+  const topic = document.getElementById("topicInput").value.trim();
+  const btn = document.getElementById("generateBtn");
+  if (btn.hasAttribute("data-loading")) {
+    btn.disabled = true;
+    return;
+  }
+  btn.disabled = !subject || !topic;
 }
 
 function displayTopicResults(data, subject, topic, language) {
@@ -657,6 +709,37 @@ function esc(str) {
     .replace(/'/g, "&#039;");
 }
 
+function markInvalid(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  let errorId = "";
+  if (id === "subjectInput") {
+    errorId = "subjectError";
+  } else if (id === "topicInput") {
+    errorId = "topicError";
+  }
+  input.classList.add("is-invalid");
+  input.setAttribute("aria-invalid", "true");
+  if (errorId) input.setAttribute("aria-describedby", errorId);
+  if (typeof input.focus === "function") input.focus();
+}
+
+function formatBytes(bytes) {
+  if (bytes === null || bytes === undefined) return "";
+  if (bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  let size = bytes;
+  let unitIndex = 0;
+  const maxUnitIndex = units.length - 1;
+  while (size >= 1024 && unitIndex < maxUnitIndex) {
+    size /= 1024;
+    unitIndex += 1;
+  }
+  // Larger units or whole bytes don't need decimals; keep one decimal for small KB/MB values.
+  const decimalPlaces = size >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${size.toFixed(decimalPlaces)} ${units[unitIndex]}`;
+}
+
 /* ---- Bind flashcards in upload results too ---- */
 document.addEventListener("click", (e) => {
   const card = e.target.closest("#uploadResults .flashcard");
@@ -674,6 +757,18 @@ function initDarkMode() {
     const isDark = document.documentElement.getAttribute("data-bs-theme") === "dark";
     _applyDarkMode(!isDark);
   });
+}
+
+/* ============================================================
+   BACK TO TOP
+   ============================================================ */
+function initBackToTop() {
+  const btn = document.getElementById("backToTop");
+  if (!btn) return;
+  const toggle = () => btn.classList.toggle("show", window.scrollY > 400);
+  window.addEventListener("scroll", toggle, { passive: true });
+  toggle();
+  btn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
 function _applyDarkMode(enable) {
