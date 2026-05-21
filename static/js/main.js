@@ -169,6 +169,8 @@ function applyLanguage(lang) {
   setText("langDisplay", t.langDisplay);
   setText("historyLabel", t.historyLabel);
   setText("historyEmpty", t.historyEmpty);
+  setText("subjectError", t.errorNoSubject);
+  setText("topicError", t.errorNoTopic);
 
   // Feature pill labels
   document.querySelectorAll(".feat-label").forEach((el) => {
@@ -307,6 +309,7 @@ function initGenerateBtn() {
     input.addEventListener("input", () => {
       input.classList.remove("is-invalid");
       input.removeAttribute("aria-invalid");
+      input.removeAttribute("aria-describedby");
       updateGenerateState();
     });
   });
@@ -709,13 +712,16 @@ function esc(str) {
 function markInvalid(id) {
   const input = document.getElementById(id);
   if (!input) return;
+  const errorId = id === "subjectInput" ? "subjectError" : id === "topicInput" ? "topicError" : "";
   input.classList.add("is-invalid");
   input.setAttribute("aria-invalid", "true");
-  input.focus();
+  if (errorId) input.setAttribute("aria-describedby", errorId);
+  if (typeof input.focus === "function") input.focus();
 }
 
 function formatBytes(bytes) {
   if (bytes === null || bytes === undefined) return "";
+  if (bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let unitIndex = 0;
