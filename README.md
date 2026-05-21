@@ -155,3 +155,44 @@ The app integrates with **Google Gemini 1.5 Flash** for AI-generated content.
 | File parsing | PyPDF2, python-docx |
 | Frontend | HTML5, Bootstrap 5, Bootstrap Icons |
 | Fonts/Icons | CDN (no build step required) |
+
+---
+
+## 📱 Android App (APK)
+
+An Android WebView project is included at:
+
+`/home/runner/work/Student-helpfull/Student-helpfull/android-app`
+
+### Build Debug APK
+
+```bash
+cd android-app
+./gradlew assembleDebug
+```
+
+APK output:
+
+`android-app/app/build/outputs/apk/debug/app-debug.apk`
+
+### Build Release APK
+
+```bash
+cd android-app
+./gradlew assembleRelease
+```
+
+APK output:
+
+`android-app/app/build/outputs/apk/release/app-release.apk`
+
+### Configure App URL
+
+By default the Android app loads:
+
+`http://10.0.2.2:5000`
+
+This works with an Android emulator when your Flask app runs on the host machine.  
+To point to a deployed backend, change `app_base_url` in:
+
+`android-app/app/src/main/res/values/strings.xml`

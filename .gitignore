@@ -30,3 +30,8 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Android (webview wrapper app)
+android-app/.gradle/
+android-app/local.properties
+android-app/**/build/
