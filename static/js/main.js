@@ -374,7 +374,11 @@ function setGenerateLoading(loading) {
   const t = I18N[currentLang];
 
   btn.disabled = loading;
-  btn.dataset.loading = loading ? "true" : "false";
+  if (loading) {
+    btn.setAttribute("data-loading", "true");
+  } else {
+    btn.removeAttribute("data-loading");
+  }
   spinner.classList.toggle("d-none", !loading);
   icon.classList.toggle("d-none", loading);
   text.textContent = loading ? t.generatingText : t.generateBtnText;
@@ -384,7 +388,7 @@ function updateGenerateState() {
   const subject = document.getElementById("subjectInput").value.trim();
   const topic = document.getElementById("topicInput").value.trim();
   const btn = document.getElementById("generateBtn");
-  if (btn.dataset.loading === "true") {
+  if (btn.hasAttribute("data-loading")) {
     btn.disabled = true;
     return;
   }
@@ -714,13 +718,13 @@ function formatBytes(bytes) {
   if (bytes === null || bytes === undefined) return "";
   const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
-  let idx = 0;
-  while (size >= 1024 && idx < units.length - 1) {
+  let unitIndex = 0;
+  while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
-    idx += 1;
+    unitIndex += 1;
   }
-  const decimalPlaces = size >= 10 || idx === 0 ? 0 : 1;
-  return `${size.toFixed(decimalPlaces)} ${units[idx]}`;
+  const decimalPlaces = size >= 10 || unitIndex === 0 ? 0 : 1;
+  return `${size.toFixed(decimalPlaces)} ${units[unitIndex]}`;
 }
 
 /* ---- Bind flashcards in upload results too ---- */
