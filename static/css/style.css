@@ -24,6 +24,15 @@ body {
   color: #374151;
 }
 
+/* ---- Focus styles ---- */
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(79,70,229,0.35);
+}
+
 /* ---- Navbar ---- */
 .navbar {
   background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
@@ -156,6 +165,10 @@ body {
   border-radius: 8px;
   padding: 0.6rem 1rem;
   font-size: 0.9rem;
+}
+.file-info-meta {
+  color: #6b7280;
+  font-size: 0.82rem;
 }
 
 /* ---- Result tabs ---- */
@@ -476,6 +489,34 @@ body {
   box-shadow: 0 8px 30px rgba(79,70,229,0.35);
 }
 
+/* ---- Back to top ---- */
+.back-to-top {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(79,70,229,0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1030;
+}
+.back-to-top:hover { background: var(--primary-dark); }
+.back-to-top.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
 /* ---- Section divider ---- */
 .section-divider svg {
   display: block;
@@ -572,6 +613,24 @@ body {
 [data-bs-theme="dark"] .result-tabs .nav-link:hover:not(.active) { background: #1e1b3a; }
 [data-bs-theme="dark"] .demo-banner { background: linear-gradient(90deg, #92400e 0%, #b45309 100%); color: #fef3c7; }
 [data-bs-theme="dark"] .loading-overlay { background: rgba(30,27,58,0.9); }
+[data-bs-theme="dark"] .file-info-meta { color: #cbd5f5; }
+
+@media (max-width: 576px) {
+  .hero-section { padding: 3.5rem 0 4.5rem; }
+  .hero-subtitle { padding: 0 0.75rem; }
+  .section-title { font-size: 1.65rem; }
+  .upload-dropzone { padding: 2rem 1.25rem; }
+  .notes-card, .revision-card { padding: 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
 
 /* ============================================================
    PRINT STYLES
@@ -598,4 +657,3 @@ body {
   .quiz-wrap { max-width: 100% !important; }
   @page { margin: 1.5cm; }
 }
-
