@@ -712,7 +712,12 @@ function esc(str) {
 function markInvalid(id) {
   const input = document.getElementById(id);
   if (!input) return;
-  const errorId = id === "subjectInput" ? "subjectError" : id === "topicInput" ? "topicError" : "";
+  let errorId = "";
+  if (id === "subjectInput") {
+    errorId = "subjectError";
+  } else if (id === "topicInput") {
+    errorId = "topicError";
+  }
   input.classList.add("is-invalid");
   input.setAttribute("aria-invalid", "true");
   if (errorId) input.setAttribute("aria-describedby", errorId);
@@ -729,6 +734,7 @@ function formatBytes(bytes) {
     size /= 1024;
     unitIndex += 1;
   }
+  // Larger units or whole bytes don't need decimals; keep one decimal for small KB/MB values.
   const decimalPlaces = size >= 10 || unitIndex === 0 ? 0 : 1;
   return `${size.toFixed(decimalPlaces)} ${units[unitIndex]}`;
 }
