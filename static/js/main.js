@@ -331,8 +331,14 @@ async function handleGenerate() {
 
   if (!subject || !topic) {
     let errorMsg = "";
-    if (!subject) { markInvalid("subjectInput"); errorMsg = t.errorNoSubject; }
-    if (!topic) { markInvalid("topicInput"); if (!errorMsg) errorMsg = t.errorNoTopic; }
+    if (!subject) {
+      markInvalid("subjectInput");
+      errorMsg = t.errorNoSubject;
+    }
+    if (!topic) {
+      markInvalid("topicInput");
+      if (!errorMsg) errorMsg = t.errorNoTopic;
+    }
     if (errorMsg) showToast(errorMsg, "bg-danger");
     updateGenerateState();
     return;
@@ -705,7 +711,7 @@ function markInvalid(id) {
 }
 
 function formatBytes(bytes) {
-  if (!bytes && bytes !== 0) return "";
+  if (bytes === null || bytes === undefined) return "";
   const units = ["B", "KB", "MB", "GB"];
   let size = bytes;
   let idx = 0;
@@ -713,7 +719,8 @@ function formatBytes(bytes) {
     size /= 1024;
     idx += 1;
   }
-  return `${size.toFixed(size >= 10 || idx === 0 ? 0 : 1)} ${units[idx]}`;
+  const decimalPlaces = size >= 10 || idx === 0 ? 0 : 1;
+  return `${size.toFixed(decimalPlaces)} ${units[idx]}`;
 }
 
 /* ---- Bind flashcards in upload results too ---- */
